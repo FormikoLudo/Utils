@@ -1,3 +1,6 @@
+[![Release](https://jitpack.io/v/FormikoLudo/Utils.svg)]
+(https://jitpack.io/#FormikoLudo/Utils)
+
 # Utils
 Tools common to all projects.
 

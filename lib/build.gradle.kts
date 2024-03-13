@@ -4,10 +4,13 @@ plugins {
 }
 
 version = "0.0.1"
+group = "fr.formiko.utils"
+artifactId = "Utils"
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -21,6 +24,8 @@ dependencies {
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation(libs.guava)
+
+    implementation("com.github.jitpack:gradle-simple:1.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
