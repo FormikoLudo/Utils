@@ -4,7 +4,7 @@ plugins {
     `maven-publish` // Add ./gradlew publishToMavenLocal
 }
 
-version = "0.0.2"
+version = "0.0.3"
 group = "fr.formiko.utils"
 
 repositories {
@@ -42,4 +42,13 @@ tasks.assemble {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+		    from(components["java"])
+        }
+    }
 }
