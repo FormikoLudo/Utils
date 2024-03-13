@@ -1,8 +1,10 @@
 package fr.formiko.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -138,5 +140,45 @@ public class FLUFilesTest {
     private static Stream<Arguments> testMoveDirectorySource() {
         return Stream.of(
                 Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "moveOfTestResources/", "subDir/existingFile.txt"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testReadFileSource")
+    void testReadFile(String path, boolean shouldWork, String content) {
+        if (shouldWork) {
+            assertEquals(content, FLUFiles.readFile(path));
+        } else {
+            assertNull(FLUFiles.readFile(path));
+        }
+    }
+
+    private static Stream<Arguments> testReadFileSource() {
+        return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, "Some content."),
+                Arguments.of(TEST_PATH + "unexistingFile.x", false, null), Arguments.of(null, false, null),
+                Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
+                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, "ipnzéfl\n" + //
+                        "zgrebinoa\n" + //
+                        "rez bzn,\n"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testReadFileAsListSource")
+    void testWriteFile(String path, boolean shouldWork, List<String> content) {
+        if (shouldWork) {
+            List<String> list = FLUFiles.readFileAsList(path);
+            assertEquals(content.size(), list.size());
+            for (int i = 0; i < content.size(); i++) {
+                assertEquals(content.get(i), list.get(i));
+            }
+        } else {
+            assertNull(FLUFiles.readFileAsList(path));
+        }
+    }
+
+    private static Stream<Arguments> testReadFileAsListSource() {
+        return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, List.of("Some content.")),
+                Arguments.of(TEST_PATH + "unexistingFile.x", false, null), Arguments.of(null, false, null),
+                Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
+                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, List.of("ipnzéfl", "zgrebinoa", "rez bzn,")));
     }
 }

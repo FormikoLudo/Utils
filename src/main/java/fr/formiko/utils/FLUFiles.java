@@ -2,8 +2,9 @@ package fr.formiko.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
-import com.google.common.io.Files;
 
 /**
  * A utility class to manipulate files.
@@ -27,8 +28,8 @@ public class FLUFiles {
     public static boolean copy(String source, String destination) { return internal.copy(source, destination); }
     public static boolean move(String source, String destination) { return internal.move(source, destination); }
 
-    public static String readFile(String path) { return null; }
-    public static List<String> readFileAsList(String path) { return null; }
+    public static String readFile(String path) { return internal.readFile(path); }
+    public static List<String> readFileAsList(String path) { return internal.readFileAsList(path); }
     public static boolean writeFile(String path, String content) { return false; }
     public static boolean appendToFile(String path, String content) { return false; }
 
@@ -111,7 +112,7 @@ public class FLUFiles {
                     return true;
                 }
                 try {
-                    Files.copy(sourceFile, destinationFile);
+                    com.google.common.io.Files.copy(sourceFile, destinationFile);
                 } catch (IOException | IllegalArgumentException e) {
                     return false;
                 }
@@ -130,6 +131,29 @@ public class FLUFiles {
                 return new File(source).renameTo(destinationFile);
             } else {
                 return false;
+            }
+        }
+        private static String readFile(String path) {
+            if (isAValidePath(path)) {
+                try {
+                    // return Files.readAllLines(Paths.get(path));
+                    return Files.readString(Paths.get(path));
+                } catch (IOException e) {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+        private static List<String> readFileAsList(String path) {
+            if (isAValidePath(path)) {
+                try {
+                    return Files.readAllLines(Paths.get(path));
+                } catch (IOException e) {
+                    return null;
+                }
+            } else {
+                return null;
             }
         }
     }
