@@ -1,16 +1,16 @@
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
+    `maven-publish` // Add ./gradlew publishToMavenLocal
 }
 
-version = "0.0.1"
+version = "0.0.2"
 group = "fr.formiko.utils"
-artifactId = "Utils"
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-    maven { url "https://jitpack.io" }
+    maven ("https://jitpack.io")
 }
 
 dependencies {
