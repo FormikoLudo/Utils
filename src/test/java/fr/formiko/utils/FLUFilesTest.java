@@ -40,7 +40,8 @@ public class FLUFilesTest {
     private static Stream<Arguments> testCreateFilesSource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles1.txt", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles2.png", true), Arguments.of(TEST_PATH_TEMPORARY + "éà@--", true),
-                Arguments.of(TEST_PATH + "existingFile.x", false), Arguments.of(TEST_PATH_TEMPORARY + "/2/3/4/t", true));
+                Arguments.of(TEST_PATH + "existingFile.x", false), Arguments.of(TEST_PATH_TEMPORARY + "/2/3/4/t", true),
+                Arguments.of(null, false));
     }
 
     @ParameterizedTest
@@ -54,7 +55,7 @@ public class FLUFilesTest {
     private static Stream<Arguments> testCreateDirectorySource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory1", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory2", true), Arguments.of(TEST_PATH_TEMPORARY + "éàOP%u%", true),
-                Arguments.of(TEST_PATH, false), Arguments.of(TEST_PATH_TEMPORARY + "DIR/2/3/4/t/", true));
+                Arguments.of(TEST_PATH, false), Arguments.of(TEST_PATH_TEMPORARY + "DIR/2/3/4/t/", true), Arguments.of(null, false));
     }
 
     @ParameterizedTest
@@ -68,7 +69,8 @@ public class FLUFilesTest {
 
     private static Stream<Arguments> testDeleteSource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY, true, TEST_PATH_TEMPORARY + "P/2/3/4"),
-                Arguments.of(TEST_PATH_TEMPORARY, false, null), Arguments.of(TEST_PATH + "unexistingDirectory", false, null));
+                Arguments.of(TEST_PATH_TEMPORARY, false, null), Arguments.of(TEST_PATH + "unexistingDirectory", false, null),
+                Arguments.of(null, false, null));
     }
 
     @ParameterizedTest
@@ -84,13 +86,16 @@ public class FLUFilesTest {
         return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, TEST_PATH_TEMPORARY + "existingFile.x"), // normal copy
                 Arguments.of(TEST_PATH + "unexistingFile.x", false, TEST_PATH_TEMPORARY + "unexistingFile.x"), // copy of missing file
                 Arguments.of(TEST_PATH_TEMPORARY + "existingFile.x", false, TEST_PATH_TEMPORARY + "existingFile.x"), // don't exist here
-                Arguments.of(TEST_PATH + "existingFile.x", false, TEST_PATH + "existingFile.x")); // same location
+                Arguments.of(TEST_PATH + "existingFile.x", false, TEST_PATH + "existingFile.x"), // same location
+                Arguments.of(null, false, TEST_PATH), Arguments.of(TEST_PATH + "existingFile.x", false, ""));
     }
 
     @ParameterizedTest
     @MethodSource("testMoveSource")
     void testMove(String source, boolean shouldWork, String destination) {
-        assertEquals(true, FLUFiles.createFile(source));
+        if (source != null) {
+            assertEquals(true, FLUFiles.createFile(source));
+        }
         assertEquals(shouldWork, FLUFiles.move(source, destination));
         if (shouldWork) {
             assertEquals(true, FLUFiles.delete(destination));
@@ -98,7 +103,8 @@ public class FLUFilesTest {
     }
 
     private static Stream<Arguments> testMoveSource() {
-        return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "RTYUIFile.x", true, TEST_PATH_TEMPORARY + "DTCFile.x"));
+        return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "RTYUIFile.x", true, TEST_PATH_TEMPORARY + "DTCFile.x"),
+                Arguments.of(null, false, TEST_PATH), Arguments.of(TEST_PATH_TEMPORARY + "exzbnkistingFile.x", false, null));
     }
 
     @ParameterizedTest

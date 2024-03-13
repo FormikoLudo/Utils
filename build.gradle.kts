@@ -2,6 +2,7 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
     `maven-publish` // Add ./gradlew publishToMavenLocal
+    jacoco
 }
 
 version = "0.0.3"
@@ -47,6 +48,11 @@ tasks.named<Test>("test") {
 		events("passed", "skipped", "failed")
         showStandardStreams = true
 	}
+
+    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+}
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 

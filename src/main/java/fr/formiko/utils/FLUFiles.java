@@ -51,6 +51,7 @@ public class FLUFiles {
 
     public static boolean openWebLinkInBrowser(String url) { return false; }
 
+    // Internal class to hide implementation
     private static class FLUFilesInternal {
         private FLUFilesInternal() {} // hide constructor
 

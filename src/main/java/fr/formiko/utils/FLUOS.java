@@ -15,10 +15,10 @@ public class FLUOS {
 
     /**
      * Singleton pattern.
-     * Private constructor to prevent instantiation.
+     * Private constructor to prevent instantiation. (Protected for testing)
      */
-    private FLUOS() {
-        String osName = System.getProperty("os.name").toLowerCase();
+    protected FLUOS(String osName) {
+        instance = this;
         if (osName.contains("win")) {
             os = OS.WINDOWS;
         } else if (osName.contains("mac")) {
@@ -29,6 +29,7 @@ public class FLUOS {
             os = OS.OTHER;
         }
     }
+    private FLUOS() { this(System.getProperty("os.name").toLowerCase()); }
 
     public static @Nonnull OS getOS() { return instance.os; }
     public static boolean isWindows() { return instance.os == OS.WINDOWS; }
