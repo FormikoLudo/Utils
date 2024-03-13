@@ -2,6 +2,8 @@ package fr.formiko.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -30,6 +32,7 @@ public class FLUFiles {
 
     public static String readFile(String path) { return internal.readFile(path); }
     public static List<String> readFileAsList(String path) { return internal.readFileAsList(path); }
+    public static String readFileFromWeb(String url) { return internal.readFileFromWeb(url); }
     public static boolean writeFile(String path, String content) { return false; }
     public static boolean appendToFile(String path, String content) { return false; }
 
@@ -133,7 +136,7 @@ public class FLUFiles {
                 return false;
             }
         }
-        private static String readFile(String path) {
+        private String readFile(String path) {
             if (isAValidePath(path)) {
                 try {
                     // return Files.readAllLines(Paths.get(path));
@@ -145,7 +148,7 @@ public class FLUFiles {
                 return null;
             }
         }
-        private static List<String> readFileAsList(String path) {
+        private List<String> readFileAsList(String path) {
             if (isAValidePath(path)) {
                 try {
                     return Files.readAllLines(Paths.get(path));
@@ -153,6 +156,18 @@ public class FLUFiles {
                     return null;
                 }
             } else {
+                return null;
+            }
+        }
+
+        private String readFileFromWeb(String urlString) {
+            if (urlString == null) {
+                return null;
+            }
+            try {
+                URL url = URI.create(urlString).toURL();
+                return new String(url.openStream().readAllBytes());
+            } catch (IOException e) {
                 return null;
             }
         }

@@ -181,4 +181,24 @@ public class FLUFilesTest {
                 Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
                 Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, List.of("ipnzéfl", "zgrebinoa", "rez bzn,")));
     }
+
+    @ParameterizedTest
+    @MethodSource("testReadFileFromWebSource")
+    void testReadFileFromWeb(String url, boolean shouldWork, String content) {
+        if (shouldWork) {
+            assertEquals(content, FLUFiles.readFileFromWeb(url));
+        } else {
+            assertNull(FLUFiles.readFileFromWeb(url));
+        }
+    }
+
+    private static Stream<Arguments> testReadFileFromWebSource() { return Stream.of(Arguments.of(
+            "https://gist.githubusercontent.com/HydrolienF/0dc21ed2c0788b4de206102871410d4b/raw/a85c8bcf47ae0c081841df756c68122c83151747/fr.json",
+            true, """
+                    {
+                      "schemaVersion": 1,
+                      "label": "French",
+                      "message": "100%",
+                      "color": "00FF00"
+                    }"""), Arguments.of(null, false, null), Arguments.of("h://unexisting.url", false, null)); }
 }
