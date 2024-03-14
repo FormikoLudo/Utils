@@ -7,7 +7,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * A utility class to manipulate files.
@@ -37,9 +40,9 @@ public class FLUFiles {
     public static boolean writeFile(String path, String content) { return internal.writeFile(path, content); }
     public static boolean appendToFile(String path, String content) { return internal.appendToFile(path, content); }
 
-    public static List<String> listFiles(String path) { return null; }
+    public static List<String> listFiles(String path) { return internal.listFiles(path); }
 
-    public static boolean zip(String source, String destination) { return false; }
+    public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
     public static boolean unzip(String source, String destination, String folderIncideZipToGet) { return false; }
     public static boolean unzip(String source, String destination) { return unzip(source, destination, "."); }
 
@@ -66,7 +69,7 @@ public class FLUFiles {
             if (isAValidePath(path)) {
                 try {
                     File file = new File(path);
-                    file.getParentFile().mkdirs();
+                    createParents(file);
                     return file.createNewFile();
                 } catch (IOException e) {
                     return false;
@@ -103,7 +106,7 @@ public class FLUFiles {
         private boolean copy(String source, String destination) {
             if (isAValidePath(source) && isAValidePath(destination)) {
                 File destinationFile = new File(destination);
-                destinationFile.getParentFile().mkdirs();
+                createParents(destinationFile);
                 File sourceFile = new File(source);
                 if (!sourceFile.exists()) {
                     return false;
@@ -131,7 +134,7 @@ public class FLUFiles {
         private boolean move(String source, String destination) {
             if (isAValidePath(source) && isAValidePath(destination)) {
                 File destinationFile = new File(destination);
-                destinationFile.getParentFile().mkdirs();
+                createParents(destinationFile);
                 return new File(source).renameTo(destinationFile);
             } else {
                 return false;
@@ -178,7 +181,7 @@ public class FLUFiles {
          */
         private boolean writeFile(String path, String content) {
             if (isAValidePath(path)) {
-                new File(path).getParentFile().mkdirs();
+                createParents(path);
                 try {
                     Files.writeString(Paths.get(path), content, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                     return true;
@@ -195,7 +198,7 @@ public class FLUFiles {
          */
         private boolean appendToFile(String path, String content) {
             if (isAValidePath(path)) {
-                new File(path).getParentFile().mkdirs();
+                createParents(path);
                 try {
                     Files.writeString(Paths.get(path), content, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
                     return true;
@@ -206,5 +209,49 @@ public class FLUFiles {
                 return false;
             }
         }
+
+        private List<String> listFiles(String path) {
+            if (isAValidePath(path)) {
+                String[] list = new File(path).list();
+                return list == null ? null : Arrays.asList(list);
+            } else {
+                return null;
+            }
+        }
+
+        private boolean zip(String source, String destination) {
+            if (isAValidePath(source) && isAValidePath(destination)) {
+                destination = FLUStrings.addAtTheEndIfNeeded(destination, ".zip");
+                createParents(destination);
+                File sourceFile = new File(source);
+                if (!sourceFile.exists()) {
+                    return false;
+                }
+                try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(Paths.get(destination)))) {
+                    zipFile(sourceFile, sourceFile.getName(), destination, zos);
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        private void zipFile(File fileToZip, String fileName, String destination, ZipOutputStream zos) throws IOException {
+            if (fileToZip.isDirectory()) {
+                fileName = FLUStrings.addAtTheEndIfNeeded(fileName, File.separator);
+                zos.putNextEntry(new ZipEntry(fileName));
+                zos.closeEntry();
+                for (File file : fileToZip.listFiles()) {
+                    zipFile(file, fileName + file.getName(), destination, zos);
+                }
+            } else {
+                zos.putNextEntry(new ZipEntry(fileName));
+                Files.copy(fileToZip.toPath(), zos);
+                zos.closeEntry();
+            }
+        }
+        private void createParents(String path) { createParents(new File(path)); }
+        private void createParents(File file) { file.getParentFile().mkdirs(); }
     }
 }

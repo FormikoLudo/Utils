@@ -253,4 +253,46 @@ public class FLUFilesTest {
                 Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC\nSome content",
                         TEST_PATH_TEMPORARY + "existingFile4"));
     }
+
+    @ParameterizedTest
+    @MethodSource("testListFilesSource")
+    void testListFiles(String path, boolean shouldWork, List<String> expectedFiles) {
+        clean();
+        if (shouldWork) {
+            List<String> files = FLUFiles.listFiles(path);
+            assertEquals(expectedFiles.size(), files.size());
+            for (String s : expectedFiles) {
+                assertTrue(files.contains(s));
+            }
+        } else {
+            assertNull(FLUFiles.listFiles(path));
+        }
+    }
+
+    private static Stream<Arguments> testListFilesSource() {
+        return Stream.of(
+                Arguments.of(TEST_PATH, true, List.of("existingDir", "existingFile.x", "existingFile2", "existingFile3", "existingFile4")),
+                Arguments.of(TEST_PATH + "existingDir/", true, List.of("subDir")),
+                Arguments.of(TEST_PATH + "existingDir/subDir/", true, List.of("existingFile.txt")), Arguments.of(null, false, null),
+                Arguments.of(TEST_PATH + "unexistingDirectory", false, null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testZipSource")
+    void testZip(String path, boolean shouldWork, String destination, String realDestination) {
+        assertEquals(shouldWork, FLUFiles.zip(path, destination));
+        if (shouldWork) {
+            assertEquals(true, FLUFiles.delete(realDestination));
+        }
+    }
+
+    private static Stream<Arguments> testZipSource() {
+        return Stream.of(
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "existingDir.zip",
+                        TEST_PATH_TEMPORARY + "existingDir.zip"),
+                Arguments.of(TEST_PATH + "existingDir", true, TEST_PATH_TEMPORARY + "existingDirZ2",
+                        TEST_PATH_TEMPORARY + "existingDirZ2.zip"),
+                Arguments.of(TEST_PATH + "unexistingDirectoryTYUI", false, TEST_PATH_TEMPORARY + "unexistingDirectory.zip", null),
+                Arguments.of("existingDir", false, null, null), Arguments.of(null, false, null, null));
+    }
 }
