@@ -1,5 +1,6 @@
 package fr.formiko.utils;
 
+import fr.formiko.utils.progressions.FLUProgression;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,12 +23,17 @@ import java.util.zip.ZipOutputStream;
  * 
  * @author Hydrolien
  * @since 0.0.3
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class FLUFiles {
     private static FLUFilesInternal internal = new FLUFilesInternal();
+    private static FLUProgression progression;
 
     private FLUFiles() {} // hide constructor
+
+    // GET SET ----------------------------------------------------------------------
+    public static FLUProgression getProgression() { return progression; }
+    public static void setProgression(FLUProgression progression) { FLUFiles.progression = progression; }
 
     public static boolean isAValidePath(String path) { return internal.isAValidePath(path); }
     public static boolean createFile(String path) { return internal.createFile(path); }
@@ -50,8 +56,7 @@ public class FLUFiles {
     }
     public static boolean unzip(String source, String destination) { return unzip(source, destination, ""); }
 
-    public static boolean download(String url, String destination, boolean withProgressInfo) { return false; }
-    public static boolean download(String url, String destination) { return download(url, destination, false); }
+    public static boolean download(String url, String destination) { return internal.download(url, destination); }
     public static boolean downloadAndUnzip(String url, String destination, String directoryInsideZipToGet) { return false; }
     public static boolean downloadAndUnzip(String url, String destination) { return downloadAndUnzip(url, destination, ""); }
     public static String downloadAndRead(String url) { return null; }
@@ -325,7 +330,82 @@ public class FLUFiles {
                         Files.copy(zis, Paths.get(absoluteDestinationPath + entryName));
                     }
                 }
+            }
+        }
 
+        private boolean download(String url, String destination) {
+            if (isAValidePath(url) && isAValidePath(destination)) {
+                try {
+                    URL urlObject = URI.create(url).toURL();
+                    InputStream is = urlObject.openStream();
+                    File destinationFile = new File(destination);
+                    createParents(destinationFile);
+                    Files.copy(is, destinationFile.toPath());
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
+    class FLUProgressionThread extends Thread {
+        private File fileOut;
+        private long fileToDowloadSize;
+        private boolean running;
+        private String downloadName;
+        private FLUProgression progressionInstance;
+        /**
+         * {@summary Main constructor.}<br>
+         * 
+         * @param fileOut           file that we are curently filling by the downloading file
+         * @param fileToDowloadSize size that we should reach when download will end
+         */
+        public FLUProgressionThread(File fileOut, long fileToDowloadSize, String downloadName, FLUProgression progressionInstance) {
+            this.fileOut = fileOut;
+            this.fileToDowloadSize = fileToDowloadSize;
+            this.downloadName = downloadName;
+            this.progressionInstance = progressionInstance;
+            running = true;
+        }
+
+        public void stopRuning() { running = false; }
+        /**
+         * {@summary Main function that print every second %age of download done.}<br>
+         */
+        public void run() {
+            long fileOutSize = 0;
+            long lastFileOutSize = 0;
+            long timeStart = System.currentTimeMillis();
+            long timeFromLastBitDownload = timeStart;
+            while (fileOutSize < fileToDowloadSize && running) {
+                fileOutSize = fileOut.length();
+                double progression = ((double) fileOutSize) / (double) fileToDowloadSize;
+                int percent = (int) (100 * progression);
+                long curentTime = System.currentTimeMillis();
+                long timeElapsed = curentTime - timeStart;
+                long timeLeft = (long) ((double) ((timeElapsed / progression) - timeElapsed));
+                String sTimeLeft = FLUTime.msToTime(timeLeft) + " left";
+                String message = "Downloading " + downloadName + " - " + percent + "% - ";
+                if (fileOutSize != lastFileOutSize) {// update watcher of working download
+                    timeFromLastBitDownload = curentTime;
+                }
+                if (timeFromLastBitDownload + 10000 < curentTime) {
+                    message += (((curentTime - timeFromLastBitDownload) / 1000) + "s untill a new bit haven't been download");
+                    if (timeFromLastBitDownload + 60000 < curentTime) {
+                        stopRuning();
+                        // TODO stop the IO opperation.
+                    }
+                } else {
+                    message += sTimeLeft;
+                }
+                progressionInstance.setDownloadingValue(percent);
+                progressionInstance.setDownloadingMessage(message);
+
+                lastFileOutSize = fileOutSize;
+                FLUTime.sleep(50);
             }
         }
     }

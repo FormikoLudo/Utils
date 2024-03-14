@@ -316,6 +316,23 @@ public class FLUFilesTest {
                         TEST_PATH_TEMPORARY + "existingFile.txt"));
     }
 
+    @ParameterizedTest
+    @MethodSource("testDownloadSource")
+    void testDownload(String url, boolean shouldWork, String destination, String fileToCheck) {
+        assertEquals(shouldWork, FLUFiles.download(url, destination));
+        if (shouldWork) {
+            assertTrue(new File(fileToCheck).exists());
+            assertEquals(true, FLUFiles.delete(destination));
+        }
+    }
+
+    private static Stream<Arguments> testDownloadSource() {
+        return Stream.of(Arguments.of(
+                "https://gist.githubusercontent.com/HydrolienF/0dc21ed2c0788b4de206102871410d4b/raw/a85c8bcf47ae0c081841df756c68122c83151747/fr.json",
+                true, TEST_PATH_TEMPORARY + "fr.json", TEST_PATH_TEMPORARY + "fr.json"),
+                Arguments.of("https://unexisting.url", false, TEST_PATH_TEMPORARY + "unexisting.url", null));
+    }
+
     public static void main(String[] args) {
         new FLUFilesTest().testUnzip(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "",
                 TEST_PATH_TEMPORARY + "existingDir/");
