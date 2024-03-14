@@ -295,4 +295,19 @@ public class FLUFilesTest {
                 Arguments.of(TEST_PATH + "unexistingDirectoryTYUI", false, TEST_PATH_TEMPORARY + "unexistingDirectory.zip", null),
                 Arguments.of("existingDir", false, null, null), Arguments.of(null, false, null, null));
     }
+
+    @ParameterizedTest
+    @MethodSource("testUnzipSource")
+    void testUnzip(String pathToZip, boolean shouldWork, String zipedFile, String pathToDownloadIntoZip) {
+        assertEquals(shouldWork, FLUFiles.zip(pathToZip, zipedFile));
+        assertEquals(shouldWork, FLUFiles.unzip(zipedFile, pathToDownloadIntoZip));
+        // TODO
+        // assertEquals(shouldWork, FLUFiles.unzip(path, destination));
+        // if (shouldWork) {
+        // assertTrue(new File(destination + fileToFind).exists());
+        // assertEquals(true, FLUFiles.delete(destination));
+        // }
+    }
+
+    private static Stream<Arguments> testUnzipSource() { return Stream.of(); }
 }

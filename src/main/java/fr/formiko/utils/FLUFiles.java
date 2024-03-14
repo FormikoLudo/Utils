@@ -2,6 +2,7 @@ package fr.formiko.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -10,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -43,7 +45,9 @@ public class FLUFiles {
     public static List<String> listFiles(String path) { return internal.listFiles(path); }
 
     public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
-    public static boolean unzip(String source, String destination, String folderIncideZipToGet) { return false; }
+    public static boolean unzip(String source, String destination, String folderIncideZipToGet) {
+        return internal.unzip(source, destination, folderIncideZipToGet);
+    }
     public static boolean unzip(String source, String destination) { return unzip(source, destination, "."); }
 
     public static boolean download(String url, String destination, boolean withProgressInfo) { return false; }
@@ -129,6 +133,29 @@ public class FLUFiles {
                 return false;
             }
         }
+        // private boolean copy(File source, OutputStream destination) {
+        // if (isAValidePath(source.getName())) {
+        // if (source == null || !source.exists()) {
+        // return false;
+        // }
+        // if (source.isDirectory()) {
+        // boolean flag = true;
+        // for (String subPath : source.list()) {
+        // if (!copy(new File(source, subPath), destination)) {
+        // flag = false;
+        // }
+        // }
+        // return flag;
+        // }
+        // try {
+        // return Files.copy(source.toPath(), destination) > 0;
+        // } catch (IOException e) {
+        // return false;
+        // }
+        // } else {
+        // return false;
+        // }
+        // }
 
 
         private boolean move(String source, String destination) {
@@ -170,7 +197,9 @@ public class FLUFiles {
             }
             try {
                 URL url = URI.create(urlString).toURL();
-                return new String(url.openStream().readAllBytes());
+                try (InputStream is = url.openStream()) {
+                    return new String(is.readAllBytes());
+                }
             } catch (IOException e) {
                 return null;
             }
@@ -253,5 +282,35 @@ public class FLUFiles {
         }
         private void createParents(String path) { createParents(new File(path)); }
         private void createParents(File file) { file.getParentFile().mkdirs(); }
+
+        private boolean unzip(String source, String destination, String folderIncideZipToGet) {
+            if (isAValidePath(source) && isAValidePath(destination)) {
+                source = FLUStrings.addAtTheEndIfNeeded(source, ".zip");
+                File destinationFile = new File(destination);
+                createParents(destinationFile);
+                try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(Paths.get(source)))) {
+                    for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+                        createZipEntry(destination, folderIncideZipToGet, zis, entry);
+                    }
+                    return false;
+                } catch (Exception e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        private void createZipEntry(String destination, String folderIncideZipToGet, ZipInputStream zis, ZipEntry entry)
+                throws IOException {
+            if (entry.getName().startsWith(folderIncideZipToGet)) {
+                String filePath = destination + File.separator + entry.getName();
+                if (entry.isDirectory()) {
+                    createDirectory(filePath);
+                } else {
+                    createParents(filePath);
+                    Files.copy(zis, Paths.get(filePath));
+                }
+            }
+        }
     }
 }
