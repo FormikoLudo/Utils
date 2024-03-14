@@ -9,7 +9,7 @@ public class FLUProgressionCLI implements FLUProgression {
     @Override
     public void iniLauncher() { FLUFiles.setProgression(this); }
     @Override
-    public void setDownloadingMessage(String message) { System.out.println("Dowload: " + message); }
+    public void setDownloadingMessage(String message) { System.out.println(message); }
     @Override
-    public void setDownloadingValue(int value) { System.out.println(value + "% done"); }
+    public void setDownloadingValue(double value) { System.out.println(((int) (value * 100)) + "% done"); }
 }

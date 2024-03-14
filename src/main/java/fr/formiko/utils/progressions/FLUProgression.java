@@ -18,7 +18,7 @@ public interface FLUProgression {
      * 
      * @param state the state as a %age
      */
-    default void setDownloadingValue(int state) {}
+    default void setDownloadingValue(double state) {}
     /***
      * {@summary Initialize the game launcher.}
      */

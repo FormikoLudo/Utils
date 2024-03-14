@@ -1,5 +1,6 @@
 package fr.formiko.utils;
 
+import fr.formiko.utils.progressions.FLUProgressionCLI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -334,7 +335,7 @@ public class FLUFilesTest {
     }
 
     public static void main(String[] args) {
-        new FLUFilesTest().testUnzip(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "",
-                TEST_PATH_TEMPORARY + "existingDir/");
+        FLUFiles.setProgression(new FLUProgressionCLI());
+        FLUFiles.createFile(TEST_PATH_TEMPORARY + "/testCreateFiles1.txt");
     }
 }
