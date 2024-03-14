@@ -45,15 +45,15 @@ public class FLUFiles {
     public static List<String> listFiles(String path) { return internal.listFiles(path); }
 
     public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
-    public static boolean unzip(String source, String destination, String folderIncideZipToGet) {
-        return internal.unzip(source, destination, folderIncideZipToGet);
+    public static boolean unzip(String source, String destination, String directoryInsideZipToGet) {
+        return internal.unzip(source, destination, directoryInsideZipToGet);
     }
-    public static boolean unzip(String source, String destination) { return unzip(source, destination, "."); }
+    public static boolean unzip(String source, String destination) { return unzip(source, destination, ""); }
 
     public static boolean download(String url, String destination, boolean withProgressInfo) { return false; }
     public static boolean download(String url, String destination) { return download(url, destination, false); }
-    public static boolean downloadAndUnzip(String url, String destination, String folderIncideZipToGet) { return false; }
-    public static boolean downloadAndUnzip(String url, String destination) { return downloadAndUnzip(url, destination, "."); }
+    public static boolean downloadAndUnzip(String url, String destination, String directoryInsideZipToGet) { return false; }
+    public static boolean downloadAndUnzip(String url, String destination) { return downloadAndUnzip(url, destination, ""); }
     public static String downloadAndRead(String url) { return null; }
     public static int countEntryOfZipFile(String url) { return -1; }
     public static long getSize(String path) { return -1; }
@@ -67,7 +67,7 @@ public class FLUFiles {
     private static class FLUFilesInternal {
         private FLUFilesInternal() {} // hide constructor
 
-        private static boolean isAValidePath(String path) { return path != null && !path.isBlank(); }
+        private boolean isAValidePath(String path) { return path != null; }
 
         private boolean createFile(String path) {
             if (isAValidePath(path)) {
@@ -281,35 +281,51 @@ public class FLUFiles {
             }
         }
         private void createParents(String path) { createParents(new File(path)); }
-        private void createParents(File file) { file.getParentFile().mkdirs(); }
+        private void createParents(File file) {
+            if (file != null) {
+                file.getParentFile().mkdirs();
+            }
+        }
 
-        private boolean unzip(String source, String destination, String folderIncideZipToGet) {
+        private boolean unzip(String source, String destination, String directoryInsideZipToGet) {
             if (isAValidePath(source) && isAValidePath(destination)) {
                 source = FLUStrings.addAtTheEndIfNeeded(source, ".zip");
                 File destinationFile = new File(destination);
                 createParents(destinationFile);
                 try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(Paths.get(source)))) {
                     for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                        createZipEntry(destination, folderIncideZipToGet, zis, entry);
+                        createZipEntry(destination, directoryInsideZipToGet, zis, entry);
                     }
-                    return false;
+                    return true;
                 } catch (Exception e) {
+                    System.out.println(e);
+                    e.printStackTrace();
                     return false;
                 }
             } else {
                 return false;
             }
         }
-        private void createZipEntry(String destination, String folderIncideZipToGet, ZipInputStream zis, ZipEntry entry)
+        private void createZipEntry(String destination, String directoryInsideZipToGet, ZipInputStream zis, ZipEntry entry)
                 throws IOException {
-            if (entry.getName().startsWith(folderIncideZipToGet)) {
-                String filePath = destination + File.separator + entry.getName();
-                if (entry.isDirectory()) {
-                    createDirectory(filePath);
-                } else {
-                    createParents(filePath);
-                    Files.copy(zis, Paths.get(filePath));
+            File destinationFile = new File(destination);
+            String absoluteDestinationPath = FLUStrings.addAtTheEndIfNeeded(destinationFile.getAbsolutePath(), File.separator);
+            // System.out.println("absoluteDestinationPath: " + absoluteDestinationPath);
+            String entryName = entry.getName();
+            // System.out.println("entryName before: " + entryName);
+            if (entryName.startsWith(directoryInsideZipToGet)) {
+                entryName = entryName.substring(Math.max(0, directoryInsideZipToGet.length() - 1));
+                File fileToCreate = new File(destination, entryName);
+                if (fileToCreate.getAbsolutePath().startsWith(absoluteDestinationPath)) {
+                    // System.out.println("entryName: " + entryName);
+                    if (entry.isDirectory()) {
+                        createDirectory(absoluteDestinationPath + entryName);
+                    } else {
+                        createParents(absoluteDestinationPath + entryName);
+                        Files.copy(zis, Paths.get(absoluteDestinationPath + entryName));
+                    }
                 }
+
             }
         }
     }

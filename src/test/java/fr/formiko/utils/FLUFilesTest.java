@@ -28,7 +28,7 @@ public class FLUFilesTest {
 
     private static Stream<Arguments> testIsAValidePathSource() {
         return Stream.of(Arguments.of(".", true), Arguments.of("..", true), Arguments.of("~/", true), Arguments.of("../Utils/", true),
-                Arguments.of(".gitignore", true), Arguments.of("", false), Arguments.of(null, false));
+                Arguments.of(".gitignore", true), Arguments.of("", true), Arguments.of(null, false));
     }
 
     @ParameterizedTest
@@ -89,7 +89,7 @@ public class FLUFilesTest {
                 Arguments.of(TEST_PATH + "unexistingFile.x", false, TEST_PATH_TEMPORARY + "unexistingFile.x"), // copy of missing file
                 Arguments.of(TEST_PATH_TEMPORARY + "existingFile.x", false, TEST_PATH_TEMPORARY + "existingFile.x"), // don't exist here
                 Arguments.of(TEST_PATH + "existingFile.x", false, TEST_PATH + "existingFile.x"), // same location
-                Arguments.of(null, false, TEST_PATH), Arguments.of(TEST_PATH + "existingFile.x", false, ""));
+                Arguments.of(null, false, TEST_PATH), Arguments.of(TEST_PATH + "existingFile.x", false, null));
     }
 
     @ParameterizedTest
@@ -298,16 +298,26 @@ public class FLUFilesTest {
 
     @ParameterizedTest
     @MethodSource("testUnzipSource")
-    void testUnzip(String pathToZip, boolean shouldWork, String zipedFile, String pathToDownloadIntoZip) {
-        assertEquals(shouldWork, FLUFiles.zip(pathToZip, zipedFile));
-        assertEquals(shouldWork, FLUFiles.unzip(zipedFile, pathToDownloadIntoZip));
-        // TODO
-        // assertEquals(shouldWork, FLUFiles.unzip(path, destination));
-        // if (shouldWork) {
-        // assertTrue(new File(destination + fileToFind).exists());
-        // assertEquals(true, FLUFiles.delete(destination));
-        // }
+    void testUnzip(String pathToBeZip, boolean shouldWork, String zipedFile, String pathToDownloadIntoZip, String fileToCheck) {
+        assertEquals(shouldWork, FLUFiles.zip(pathToBeZip, zipedFile));
+        assertEquals(shouldWork, FLUFiles.unzip(zipedFile, TEST_PATH_TEMPORARY, pathToDownloadIntoZip));
+        if (shouldWork) {
+            assertTrue(new File(fileToCheck).exists());
+            // assertEquals(true, FLUFiles.delete(zipedFile));
+            // assertEquals(true, FLUFiles.delete(pathToDownloadIntoZip));
+        }
     }
 
-    private static Stream<Arguments> testUnzipSource() { return Stream.of(); }
+    private static Stream<Arguments> testUnzipSource() {
+        return Stream.of(
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "",
+                        TEST_PATH_TEMPORARY + "existingDir/"),
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "existingDir/subDir/",
+                        TEST_PATH_TEMPORARY + "existingFile.txt"));
+    }
+
+    public static void main(String[] args) {
+        new FLUFilesTest().testUnzip(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "",
+                TEST_PATH_TEMPORARY + "existingDir/");
+    }
 }
