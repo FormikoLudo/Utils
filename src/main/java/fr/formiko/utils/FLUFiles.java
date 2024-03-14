@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
@@ -33,8 +34,8 @@ public class FLUFiles {
     public static String readFile(String path) { return internal.readFile(path); }
     public static List<String> readFileAsList(String path) { return internal.readFileAsList(path); }
     public static String readFileFromWeb(String url) { return internal.readFileFromWeb(url); }
-    public static boolean writeFile(String path, String content) { return false; }
-    public static boolean appendToFile(String path, String content) { return false; }
+    public static boolean writeFile(String path, String content) { return internal.writeFile(path, content); }
+    public static boolean appendToFile(String path, String content) { return internal.appendToFile(path, content); }
 
     public static List<String> listFiles(String path) { return null; }
 
@@ -169,6 +170,40 @@ public class FLUFiles {
                 return new String(url.openStream().readAllBytes());
             } catch (IOException e) {
                 return null;
+            }
+        }
+
+        /**
+         * It will create the file and it's path if needed.
+         */
+        private boolean writeFile(String path, String content) {
+            if (isAValidePath(path)) {
+                new File(path).getParentFile().mkdirs();
+                try {
+                    Files.writeString(Paths.get(path), content, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * It will create the file and it's path if needed.
+         */
+        private boolean appendToFile(String path, String content) {
+            if (isAValidePath(path)) {
+                new File(path).getParentFile().mkdirs();
+                try {
+                    Files.writeString(Paths.get(path), content, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    return true;
+                } catch (IOException e) {
+                    return false;
+                }
+            } else {
+                return false;
             }
         }
     }

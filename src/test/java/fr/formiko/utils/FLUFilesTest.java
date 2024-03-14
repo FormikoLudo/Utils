@@ -201,4 +201,56 @@ public class FLUFilesTest {
                       "message": "100%",
                       "color": "00FF00"
                     }"""), Arguments.of(null, false, null), Arguments.of("h://unexisting.url", false, null)); }
+
+    @ParameterizedTest
+    @MethodSource("testWriteFileSource")
+    void testWriteFile(String path, boolean shouldWork, String content) {
+        assertEquals(shouldWork, FLUFiles.writeFile(path, content));
+        if (shouldWork) {
+            assertEquals(content, FLUFiles.readFile(path));
+            assertEquals(true, FLUFiles.delete(path));
+        }
+    }
+
+    private static Stream<Arguments> testWriteFileSource() {
+        return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testWriteFile1.txt", true, "Some content."),
+                Arguments.of(TEST_PATH_TEMPORARY + "testWriteFile2.txt", true, "Some content."),
+                Arguments.of(TEST_PATH_TEMPORARY + "éà@--", true, "Some content."), Arguments.of(null, false, "Some vyzemjzefze"),
+                Arguments.of(TEST_PATH_TEMPORARY + "DIR/2/out.in", true, "Some content"),
+                Arguments.of(TEST_PATH_TEMPORARY + "existingFile2", true, "Some content"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testAppendToFileSource")
+    void testAppendToFile(String path, boolean shouldWork, String contentToWrite, String expectedContent) {
+        assertEquals(shouldWork, FLUFiles.appendToFile(path, contentToWrite));
+        if (shouldWork) {
+            assertEquals(expectedContent, FLUFiles.readFile(path));
+            assertEquals(true, FLUFiles.delete(path));
+        }
+    }
+
+    private static Stream<Arguments> testAppendToFileSource() {
+        return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testAppendToFile1.txt", true, "Some content.", "Some content."),
+                Arguments.of(TEST_PATH_TEMPORARY + "testAppendToFile2.txt", true, "Some content.", "Some content."),
+                Arguments.of(TEST_PATH_TEMPORARY + "éà@--", true, "Some content.", "Some content."),
+                Arguments.of(null, false, "Some vyzemjzefze", ""));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testAppendToExistingFileFileSource")
+    void testAppendToExistingFile(String path, boolean shouldWork, String contentToWrite, String expectedContent, String copyPath) {
+        assertEquals(true, FLUFiles.copy(path, copyPath));
+        assertEquals(shouldWork, FLUFiles.appendToFile(copyPath, contentToWrite));
+        if (shouldWork) {
+            assertEquals(expectedContent, FLUFiles.readFile(copyPath));
+        }
+    }
+
+    private static Stream<Arguments> testAppendToExistingFileFileSource() {
+        return Stream.of(
+                Arguments.of(TEST_PATH + "existingFile3", true, "Some content", "ABCSome content", TEST_PATH_TEMPORARY + "existingFile3"),
+                Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC\nSome content",
+                        TEST_PATH_TEMPORARY + "existingFile4"));
+    }
 }
