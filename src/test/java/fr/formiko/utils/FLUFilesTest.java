@@ -17,11 +17,9 @@ public class FLUFilesTest {
     private static String TEST_PATH = "src/test/resources/";
     private static String TEST_PATH_TEMPORARY = TEST_PATH + "tmp/";
 
-
     @AfterAll
     @BeforeAll
     static void clean() { FLUFiles.delete(TEST_PATH_TEMPORARY); }
-
 
     @ParameterizedTest
     @MethodSource("testIsAValidePathSource")
@@ -40,6 +38,7 @@ public class FLUFilesTest {
             assertEquals(true, FLUFiles.delete(path));
         }
     }
+
     private static Stream<Arguments> testCreateFilesSource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles1.txt", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles2.png", true), Arguments.of(TEST_PATH_TEMPORARY + "éà@--", true),
@@ -55,6 +54,7 @@ public class FLUFilesTest {
             assertEquals(true, FLUFiles.delete(path));
         }
     }
+
     private static Stream<Arguments> testCreateDirectorySource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory1", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory2", true), Arguments.of(TEST_PATH_TEMPORARY + "éàOP%u%", true),
@@ -157,9 +157,7 @@ public class FLUFilesTest {
         return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, "Some content."),
                 Arguments.of(TEST_PATH + "unexistingFile.x", false, null), Arguments.of(null, false, null),
                 Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
-                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, "ipnzéfl\n" + //
-                        "zgrebinoa\n" + //
-                        "rez bzn,\n"));
+                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, "ipnzéfl\n" + "zgrebinoa\n" + "rez bzn,\n"));
     }
 
     @ParameterizedTest
