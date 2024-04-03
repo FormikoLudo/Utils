@@ -361,6 +361,17 @@ public class FLUFilesTest {
                 Arguments.of("https://unexisting.url", false, TEST_PATH_TEMPORARY + "unexisting.url", null, ""));
     }
 
+    @ParameterizedTest
+    @MethodSource("testCountEntryOfZipFileSource")
+    void testCountEntryOfZipFile(String url, int expectedCount) { assertEquals(expectedCount, FLUFiles.countEntryOfZipFile(url)); }
+
+    private static Stream<Arguments> testCountEntryOfZipFileSource() {
+        return Stream.of(Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", 9),
+                Arguments.of("https://github.com/HydrolienF/Formiko/releases/download/2.29.23/Formiko2.29.23Linux.zip", 9),
+                Arguments.of("https://unexisting.url", -1));
+    }
+
+
     public static void main(String[] args) {
         // FLUFiles.setProgression(new FLUProgressionCLI());
         // FLUFiles.createFile(TEST_PATH_TEMPORARY + "/testCreateFiles1.txt");

@@ -77,7 +77,7 @@ public class FLUFiles {
     }
     public static boolean downloadAndUnzip(String url, String destination) { return downloadAndUnzip(url, destination, ""); }
     public static String downloadAndRead(String url) { return readFileFromWeb(url); }
-    public static int countEntryOfZipFile(String url) { return -1; }
+    public static int countEntryOfZipFile(String url) { return internal.countEntryOfZipFile(url); }
     public static long getSize(String path) { return -1; }
 
     public static boolean setMaxPermission(String path, boolean recursive) { return false; }
@@ -411,6 +411,22 @@ public class FLUFiles {
                 }
             } else {
                 return false;
+            }
+        }
+
+        private int countEntryOfZipFile(String url) {
+            if (isAValidePath(url)) {
+                try (ZipInputStream zis = new ZipInputStream(URI.create(url).toURL().openStream())) {
+                    int count = 0;
+                    while (zis.getNextEntry() != null) {
+                        count++;
+                    }
+                    return count;
+                } catch (IOException e) {
+                    return -1;
+                }
+            } else {
+                return -1;
             }
         }
 
