@@ -337,10 +337,13 @@ public class FLUFiles {
                 File destinationFile = new File(destination);
                 createParents(destinationFile);
                 try (ZipInputStream zis = new ZipInputStream(source)) {
+                    boolean allOk = true;
                     for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                        createZipEntry(destination, directoryInsideZipToGet, zis, entry);
+                        if (!createZipEntry(destination, directoryInsideZipToGet, zis, entry)) {
+                            allOk = false;
+                        }
                     }
-                    return true;
+                    return allOk;
                 } catch (Exception e) {
                     System.out.println(e);
                     e.printStackTrace();
@@ -350,26 +353,35 @@ public class FLUFiles {
                 return false;
             }
         }
-        private void createZipEntry(String destination, String directoryInsideZipToGet, ZipInputStream zis, ZipEntry entry)
+        private boolean createZipEntry(String destination, String directoryInsideZipToGet, ZipInputStream zis, ZipEntry entry)
                 throws IOException {
+            directoryInsideZipToGet = FLUStrings.removeAtTheEndIfNeeded(directoryInsideZipToGet.replace('\\', '/'), FILE_SEPARATOR);
             File destinationFile = new File(destination);
             String absoluteDestinationPath = FLUStrings.addAtTheEndIfNeeded(destinationFile.getAbsolutePath().replace('\\', '/'),
                     FILE_SEPARATOR);
-            String entryName = entry.getName();
+            String entryName = entry.getName().replace('\\', '/');
             if (directoryInsideZipToGet.isEmpty() || directoryInsideZipToGet.equals(".") || entryName.startsWith(directoryInsideZipToGet)) {
-                entryName = entryName.substring(Math.max(0, directoryInsideZipToGet.length() - 1));
+                // Remove part of the path that we don't want
+                int charToCut = directoryInsideZipToGet.lastIndexOf('/');
+                entryName = FLUStrings.removeAtTheBeginningIfNeeded(entryName.substring(Math.max(0, charToCut)), FILE_SEPARATOR);
+
+                if (entryName.isEmpty()) {
+                    return true;
+                }
                 File fileToCreate = new File(destination, entryName);
                 if (fileToCreate.getAbsolutePath().replace('\\', '/').startsWith(absoluteDestinationPath)) {
                     if (entry.isDirectory()) {
                         if (!createDirectory(absoluteDestinationPath + entryName)) {
-                            System.out.println("Error while creating directory: " + absoluteDestinationPath + entryName);
+                            return false;
                         }
+                        return true;
                     } else {
                         createParents(absoluteDestinationPath + entryName);
-                        Files.copy(zis, Paths.get(absoluteDestinationPath + entryName));
+                        return Files.copy(zis, Paths.get(absoluteDestinationPath + entryName)) >= 0L;
                     }
                 }
             }
+            return true;
         }
 
         private boolean download(String url, String destination) {
