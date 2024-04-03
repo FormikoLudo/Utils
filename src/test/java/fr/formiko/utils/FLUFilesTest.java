@@ -157,9 +157,8 @@ public class FLUFilesTest {
         return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, "Some content."),
                 Arguments.of(TEST_PATH + "unexistingFile.x", false, null), Arguments.of(null, false, null),
                 Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
-                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, "ipnzéfl\n" + //
-                        "zgrebinoa\n" + //
-                        "rez bzn,\n"));
+                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true,
+                        "ipnzéfl" + System.lineSeparator() + "zgrebinoa" + System.lineSeparator() + "rez bzn," + System.lineSeparator()));
     }
 
     @ParameterizedTest
@@ -251,7 +250,7 @@ public class FLUFilesTest {
     private static Stream<Arguments> testAppendToExistingFileFileSource() {
         return Stream.of(
                 Arguments.of(TEST_PATH + "existingFile3", true, "Some content", "ABCSome content", TEST_PATH_TEMPORARY + "existingFile3"),
-                Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC\nSome content",
+                Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC" + System.lineSeparator() + "Some content",
                         TEST_PATH_TEMPORARY + "existingFile4"));
     }
 
