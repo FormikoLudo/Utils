@@ -315,7 +315,7 @@ public class FLUFiles {
         }
         private void createParents(String path) { createParents(new File(path)); }
         private void createParents(File file) {
-            if (file != null) {
+            if (file != null && file.getParentFile() != null) {
                 file.getParentFile().mkdirs();
             }
         }
