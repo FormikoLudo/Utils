@@ -104,9 +104,10 @@ public class FLUFiles {
                     createParents(file);
                     // setDownloadingValue(currentAction++ / (double) actionToDo);
                     // setDownloadingMessage("Creating file");
-                    boolean r = file.createNewFile();
+                    // boolean r = file.createNewFile();
                     // setDownloadingValue(currentAction++ / (double) actionToDo);
-                    return r;
+                    // return r;
+                    return file.createNewFile();
                 } catch (IOException e) {
                     return false;
                 }
