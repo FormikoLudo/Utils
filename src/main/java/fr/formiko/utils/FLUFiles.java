@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -64,6 +65,7 @@ public class FLUFiles {
     public static boolean appendToFile(String path, String content) { return internal.appendToFile(path, content); }
 
     public static List<String> listFiles(String path) { return internal.listFiles(path); }
+    public static List<String> listFilesRecursively(String path) { return internal.listFilesRecursively(path); }
 
     public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
     public static boolean unzip(String source, String destination, String directoryInsideZipToGet) {
@@ -78,7 +80,7 @@ public class FLUFiles {
     public static boolean downloadAndUnzip(String url, String destination) { return downloadAndUnzip(url, destination, ""); }
     public static String downloadAndRead(String url) { return readFileFromWeb(url); }
     public static int countEntryOfZipFile(String url) { return internal.countEntryOfZipFile(url); }
-    public static long getSize(String path) { return -1; }
+    public static long getSize(String path) { return internal.getSize(path); }
 
     public static boolean setMaxPermission(String path, boolean recursive) { return false; }
     public static boolean setMaxPermission(String path) { return setMaxPermission(path, true); }
@@ -274,8 +276,33 @@ public class FLUFiles {
 
         private List<String> listFiles(String path) {
             if (isAValidePath(path)) {
-                String[] list = new File(path).list();
-                return list == null ? null : Arrays.asList(list);
+                File[] list = new File(path).listFiles();
+                return list == null ? null : Arrays.stream(list).map(f -> {
+                    if (f.isDirectory()) {
+                        return f.getName() + FILE_SEPARATOR;
+                    } else {
+                        return f.getName();
+                    }
+                }).toList();
+            } else {
+                return null;
+            }
+        }
+
+        private List<String> listFilesRecursively(String path) {
+            if (isAValidePath(path)) {
+                return Arrays.stream(new File(path).listFiles()).map(f -> {
+                    if (f.isDirectory()) {
+                        // return listFilesRecursively(f.getAbsolutePath());
+                        List<String> l = new LinkedList<>();
+                        l.add(f.getName());
+                        // Add all sub files with the same path
+                        listFilesRecursively(f.getAbsolutePath()).forEach(subFile -> l.add(f.getName() + FILE_SEPARATOR + subFile));
+                        return l;
+                    } else {
+                        return List.of(f.getName());
+                    }
+                }).flatMap(List::stream).toList();
             } else {
                 return null;
             }
@@ -425,6 +452,19 @@ public class FLUFiles {
                     return count;
                 } catch (IOException e) {
                     return -1;
+                }
+            } else {
+                return -1;
+            }
+        }
+
+        private long getSize(String path) {
+            if (isAValidePath(path)) {
+                File f = new File(path);
+                if (f.isDirectory()) {
+                    return Arrays.stream(f.listFiles()).mapToLong(file -> getSize(file.getAbsolutePath())).sum();
+                } else {
+                    return f.length();
                 }
             } else {
                 return -1;
