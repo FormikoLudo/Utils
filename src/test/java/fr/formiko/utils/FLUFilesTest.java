@@ -1,6 +1,5 @@
 package fr.formiko.utils;
 
-import fr.formiko.utils.progressions.FLUProgressionCLI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,11 +16,9 @@ public class FLUFilesTest {
     private static String TEST_PATH = "src/test/resources/";
     private static String TEST_PATH_TEMPORARY = TEST_PATH + "tmp/";
 
-
     @AfterAll
     @BeforeAll
     static void clean() { FLUFiles.delete(TEST_PATH_TEMPORARY); }
-
 
     @ParameterizedTest
     @MethodSource("testIsAValidePathSource")
@@ -40,6 +37,7 @@ public class FLUFilesTest {
             assertEquals(true, FLUFiles.delete(path));
         }
     }
+
     private static Stream<Arguments> testCreateFilesSource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles1.txt", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateFiles2.png", true), Arguments.of(TEST_PATH_TEMPORARY + "éà@--", true),
@@ -55,6 +53,7 @@ public class FLUFilesTest {
             assertEquals(true, FLUFiles.delete(path));
         }
     }
+
     private static Stream<Arguments> testCreateDirectorySource() {
         return Stream.of(Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory1", true),
                 Arguments.of(TEST_PATH_TEMPORARY + "testCreateDirectory2", true), Arguments.of(TEST_PATH_TEMPORARY + "éàOP%u%", true),
@@ -157,9 +156,8 @@ public class FLUFilesTest {
         return Stream.of(Arguments.of(TEST_PATH + "existingFile.x", true, "Some content."),
                 Arguments.of(TEST_PATH + "unexistingFile.x", false, null), Arguments.of(null, false, null),
                 Arguments.of(TEST_PATH + "existingDir/subDir/", false, null),
-                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true, "ipnzéfl\n" + //
-                        "zgrebinoa\n" + //
-                        "rez bzn,\n"));
+                Arguments.of(TEST_PATH + "existingDir/subDir/existingFile.txt", true,
+                        "ipnzéfl" + System.lineSeparator() + "zgrebinoa" + System.lineSeparator() + "rez bzn," + System.lineSeparator()));
     }
 
     @ParameterizedTest
@@ -251,7 +249,7 @@ public class FLUFilesTest {
     private static Stream<Arguments> testAppendToExistingFileFileSource() {
         return Stream.of(
                 Arguments.of(TEST_PATH + "existingFile3", true, "Some content", "ABCSome content", TEST_PATH_TEMPORARY + "existingFile3"),
-                Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC\nSome content",
+                Arguments.of(TEST_PATH + "existingFile4", true, "Some content", "ABC" + System.lineSeparator() + "Some content",
                         TEST_PATH_TEMPORARY + "existingFile4"));
     }
 
@@ -334,8 +332,54 @@ public class FLUFilesTest {
                 Arguments.of("https://unexisting.url", false, TEST_PATH_TEMPORARY + "unexisting.url", null));
     }
 
+    @ParameterizedTest
+    @MethodSource("testDownloadAndUnzipSource")
+    void testDownloadAndUnzip(String url, boolean shouldWork, String destination, String fileToCheck, String directoryInsideZipToGet) {
+        assertEquals(shouldWork, FLUFiles.downloadAndUnzip(url, destination, directoryInsideZipToGet));
+        if (shouldWork) {
+            assertTrue(new File(fileToCheck).exists());
+            assertEquals(true, FLUFiles.delete(destination));
+        }
+    }
+
+    private static Stream<Arguments> testDownloadAndUnzipSource() {
+        return Stream.of(
+                Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+                        TEST_PATH_TEMPORARY + "kl1/", TEST_PATH_TEMPORARY + "kl1/" + "Kokcinelo3.0.20/", "Kokcinelo3.0.20/"),
+                Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+                        TEST_PATH_TEMPORARY + "kl2/", TEST_PATH_TEMPORARY + "kl2/" + "", "Kokcinelo3.0.20/"),
+                Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+                        TEST_PATH_TEMPORARY + "kl3/", TEST_PATH_TEMPORARY + "kl3/" + "Kokcinelo3.0.20", "Kokcinelo3.0.20/"),
+                Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+                        TEST_PATH_TEMPORARY + "kl4/", TEST_PATH_TEMPORARY + "kl4/" + "icon.png", "Kokcinelo3.0.20/icon.png"),
+                Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+                        TEST_PATH_TEMPORARY + "kl5/", TEST_PATH_TEMPORARY + "kl5/" + "icon.ico", "Kokcinelo3.0.20/icon.ico"),
+                Arguments.of("https://github.com/HydrolienF/Formiko/releases/download/2.29.23/Formiko2.29.23Linux.zip", true,
+                        TEST_PATH_TEMPORARY + "kl6/", TEST_PATH_TEMPORARY + "kl6/" + "java/", "Formiko2.29.23Linux/java/"),
+                Arguments.of("https://github.com/HydrolienF/Formiko/releases/download/2.29.23/Formiko2.29.23Linux.zip", true,
+                        TEST_PATH_TEMPORARY + "kl6/", TEST_PATH_TEMPORARY + "kl6/" + "java", "Formiko2.29.23Linux/java"),
+                Arguments.of("https://unexisting.url", false, TEST_PATH_TEMPORARY + "unexisting.url", null, ""));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testCountEntryOfZipFileSource")
+    void testCountEntryOfZipFile(String url, int expectedCount) { assertEquals(expectedCount, FLUFiles.countEntryOfZipFile(url)); }
+
+    private static Stream<Arguments> testCountEntryOfZipFileSource() {
+        return Stream.of(Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", 9),
+                Arguments.of("https://github.com/HydrolienF/Formiko/releases/download/2.29.23/Formiko2.29.23Linux.zip", 9),
+                Arguments.of("https://unexisting.url", -1));
+    }
+
+
     public static void main(String[] args) {
-        FLUFiles.setProgression(new FLUProgressionCLI());
-        FLUFiles.createFile(TEST_PATH_TEMPORARY + "/testCreateFiles1.txt");
+        // FLUFiles.setProgression(new FLUProgressionCLI());
+        // FLUFiles.createFile(TEST_PATH_TEMPORARY + "/testCreateFiles1.txt");
+        // Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
+        // TEST_PATH_TEMPORARY + "kl1/", TEST_PATH_TEMPORARY + "kl1/" + "KokcineloLauncher/", "")
+        clean();
+        System.out
+                .println(FLUFiles.downloadAndUnzip("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip",
+                        TEST_PATH_TEMPORARY, "Kokcinelo3.0.20/icon.png"));
     }
 }
