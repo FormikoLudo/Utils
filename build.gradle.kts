@@ -5,7 +5,7 @@ plugins {
     jacoco
 }
 
-version = "0.0.6"
+version = "0.0.7"
 group = "fr.formiko.utils"
 
 repositories {
@@ -31,12 +31,17 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
 tasks.assemble {
     dependsOn("jar")
+}
+
+// utf 8 encoding
+tasks.compileJava {
+    options.encoding = "UTF-8"
 }
 
 tasks.named<Test>("test") {
