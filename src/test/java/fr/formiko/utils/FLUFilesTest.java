@@ -305,6 +305,7 @@ public class FLUFilesTest {
             // assertEquals(true, FLUFiles.delete(zipedFile));
             // assertEquals(true, FLUFiles.delete(pathToDownloadIntoZip));
         }
+        clean();
     }
 
     private static Stream<Arguments> testUnzipSource() {
@@ -312,6 +313,10 @@ public class FLUFilesTest {
                 Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "",
                         TEST_PATH_TEMPORARY + "existingDir/"),
                 Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "existingDir/subDir/",
+                        TEST_PATH_TEMPORARY + "subDir/existingFile.txt"),
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "existingDir/subDir/existingFile.txt",
+                        TEST_PATH_TEMPORARY + "existingFile.txt"),
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "createdZip", "existingDir/subDir/*",
                         TEST_PATH_TEMPORARY + "existingFile.txt"));
     }
 
@@ -377,9 +382,13 @@ public class FLUFilesTest {
         // FLUFiles.createFile(TEST_PATH_TEMPORARY + "/testCreateFiles1.txt");
         // Arguments.of("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip", true,
         // TEST_PATH_TEMPORARY + "kl1/", TEST_PATH_TEMPORARY + "kl1/" + "KokcineloLauncher/", "")
+        // clean();
+        // System.out
+        // .println(FLUFiles.downloadAndUnzip("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip",
+        // TEST_PATH_TEMPORARY, "Kokcinelo3.0.20/icon.png"));
+
         clean();
-        System.out
-                .println(FLUFiles.downloadAndUnzip("https://github.com/HydrolienF/Kokcinelo/releases/download/3.0.20/KokcineloLauncher.zip",
-                        TEST_PATH_TEMPORARY, "Kokcinelo3.0.20/icon.png"));
+        // FLUFiles.zip("../teavm/", "teavm.zip");
+        FLUFiles.unzip("teavm.zip", TEST_PATH_TEMPORARY, "teavm/jso/*");
     }
 }

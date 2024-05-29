@@ -23,7 +23,6 @@ import java.util.zip.ZipOutputStream;
  * When a function name does not contains file or directory, it can be used with both.
  * All functions return true if it work and false if it doesn't.
  * Long opperation that are multithreaded:
- * - zip
  * - unzip
  * - copy
  * 
@@ -73,6 +72,9 @@ public class FLUFiles {
     public static List<String> listFilesRecursively(String path) { return internal.listFilesRecursively(path); }
 
     public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
+    /**
+     * @param directoryInsideZipToGet If it's a/b/ then b/ will be created. To have only b content, use a/b/*
+     */
     public static boolean unzip(String source, String destination, String directoryInsideZipToGet) {
         return internal.unzip(source, destination, directoryInsideZipToGet);
     }
@@ -313,7 +315,7 @@ public class FLUFiles {
                 zos.putNextEntry(new ZipEntry(finalfileName));
                 zos.closeEntry();
                 List<Boolean> allOk = Arrays.asList(true);
-                Arrays.stream(fileToZip.listFiles()).parallel().forEach(file -> {
+                Arrays.stream(fileToZip.listFiles()).forEach(file -> {
                     try {
                         zipFile(file, finalfileName + file.getName(), destination, zos);
                     } catch (IOException e) {
@@ -384,6 +386,10 @@ public class FLUFiles {
 
         private boolean createZipEntry(String destination, String directoryInsideZipToGet, InputStream zis, ZipEntry entry)
                 throws IOException {
+            boolean noDirectory = directoryInsideZipToGet.endsWith("*");
+            if (noDirectory) {
+                directoryInsideZipToGet = directoryInsideZipToGet.substring(0, directoryInsideZipToGet.length() - 1);
+            }
             directoryInsideZipToGet = FLUStrings.removeAtTheEndIfNeeded(directoryInsideZipToGet.replace('\\', '/'), FILE_SEPARATOR);
             File destinationFile = new File(destination);
             String absoluteDestinationPath = FLUStrings.addAtTheEndIfNeeded(destinationFile.getAbsolutePath().replace('\\', '/'),
@@ -391,7 +397,7 @@ public class FLUFiles {
             String entryName = entry.getName().replace('\\', '/');
             if (directoryInsideZipToGet.isEmpty() || directoryInsideZipToGet.equals(".") || entryName.startsWith(directoryInsideZipToGet)) {
                 // Remove part of the path that we don't want
-                int charToCut = directoryInsideZipToGet.lastIndexOf('/');
+                int charToCut = noDirectory ? directoryInsideZipToGet.length() : directoryInsideZipToGet.lastIndexOf('/');
                 entryName = FLUStrings.removeAtTheBeginningIfNeeded(entryName.substring(Math.max(0, charToCut)), FILE_SEPARATOR);
 
                 if (entryName.isEmpty()) {
