@@ -12,6 +12,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -20,6 +21,10 @@ import java.util.zip.ZipOutputStream;
  * Most functions don't have a comment because name should be obvious.
  * When a function name does not contains file or directory, it can be used with both.
  * All functions return true if it work and false if it doesn't.
+ * Long opperation that are multithreaded:
+ * - zip
+ * - unzip
+ * - copy
  * 
  * @author Hydrolien
  * @since 0.0.3
@@ -149,9 +154,8 @@ public class FLUFiles {
                 }
                 if (sourceFile.isDirectory()) {
                     destinationFile.mkdirs();
-                    for (String subPath : sourceFile.list()) {
-                        copy(source + FILE_SEPARATOR + subPath, destination + FILE_SEPARATOR + subPath);
-                    }
+                    Arrays.stream(sourceFile.list()).parallel()
+                            .forEach(subPath -> copy(source + FILE_SEPARATOR + subPath, destination + FILE_SEPARATOR + subPath));
                     return true;
                 }
                 try {
@@ -165,29 +169,6 @@ public class FLUFiles {
                 return false;
             }
         }
-        // private boolean copy(File source, OutputStream destination) {
-        // if (isAValidePath(source.getName())) {
-        // if (source == null || !source.exists()) {
-        // return false;
-        // }
-        // if (source.isDirectory()) {
-        // boolean flag = true;
-        // for (String subPath : source.list()) {
-        // if (!copy(new File(source, subPath), destination)) {
-        // flag = false;
-        // }
-        // }
-        // return flag;
-        // }
-        // try {
-        // return Files.copy(source.toPath(), destination) > 0;
-        // } catch (IOException e) {
-        // return false;
-        // }
-        // } else {
-        // return false;
-        // }
-        // }
 
 
         private boolean move(String source, String destination) {
@@ -300,11 +281,19 @@ public class FLUFiles {
         }
         private void zipFile(File fileToZip, String fileName, String destination, ZipOutputStream zos) throws IOException {
             if (fileToZip.isDirectory()) {
-                fileName = FLUStrings.addAtTheEndIfNeeded(fileName, FILE_SEPARATOR);
-                zos.putNextEntry(new ZipEntry(fileName));
+                final String finalfileName = FLUStrings.addAtTheEndIfNeeded(fileName, FILE_SEPARATOR);
+                zos.putNextEntry(new ZipEntry(finalfileName));
                 zos.closeEntry();
-                for (File file : fileToZip.listFiles()) {
-                    zipFile(file, fileName + file.getName(), destination, zos);
+                List<Boolean> allOk = Arrays.asList(true);
+                Arrays.stream(fileToZip.listFiles()).parallel().forEach(file -> {
+                    try {
+                        zipFile(file, finalfileName + file.getName(), destination, zos);
+                    } catch (IOException e) {
+                        allOk.set(0, false);
+                    }
+                });
+                if (!allOk.getFirst()) {
+                    throw new IOException("Error while zipping");
                 }
             } else {
                 zos.putNextEntry(new ZipEntry(fileName));
@@ -322,11 +311,7 @@ public class FLUFiles {
         private boolean unzip(String source, String destination, String directoryInsideZipToGet) {
             if (isAValidePath(source)) {
                 source = FLUStrings.addAtTheEndIfNeeded(source, ".zip");
-                try {
-                    return unzip(Files.newInputStream(Paths.get(source)), destination, directoryInsideZipToGet);
-                } catch (IOException e) {
-                    return false;
-                }
+                return unzipAllEntries(source, destination, directoryInsideZipToGet);
             } else {
                 return false;
             }
@@ -353,7 +338,23 @@ public class FLUFiles {
                 return false;
             }
         }
-        private boolean createZipEntry(String destination, String directoryInsideZipToGet, ZipInputStream zis, ZipEntry entry)
+        private boolean unzipAllEntries(String source, String destination, String directoryInsideZipToGet) {
+            try (ZipFile zipFile = new ZipFile(source)) {
+                final List<Boolean> allOk = Arrays.asList(true);
+                zipFile.stream().parallel().forEach(entry -> {
+                    try {
+                        createZipEntry(destination, directoryInsideZipToGet, zipFile.getInputStream(entry), entry);
+                    } catch (IOException e) {
+                        allOk.set(0, false);
+                    }
+                });
+                return allOk.get(0);
+            } catch (IOException e) {
+                return false;
+            }
+        }
+
+        private boolean createZipEntry(String destination, String directoryInsideZipToGet, InputStream zis, ZipEntry entry)
                 throws IOException {
             directoryInsideZipToGet = FLUStrings.removeAtTheEndIfNeeded(directoryInsideZipToGet.replace('\\', '/'), FILE_SEPARATOR);
             File destinationFile = new File(destination);
