@@ -320,7 +320,7 @@ public class FLUFiles {
                         allOk.set(0, false);
                     }
                 });
-                if (!allOk.getFirst()) {
+                if (!allOk.get(0)) {
                     throw new IOException("Error while zipping");
                 }
             } else {

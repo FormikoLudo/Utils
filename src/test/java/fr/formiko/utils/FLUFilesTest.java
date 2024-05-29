@@ -270,8 +270,8 @@ public class FLUFilesTest {
 
     private static Stream<Arguments> testListFilesSource() {
         return Stream.of(
-                Arguments.of(TEST_PATH, true, List.of("existingDir", "existingFile.x", "existingFile2", "existingFile3", "existingFile4")),
-                Arguments.of(TEST_PATH + "existingDir/", true, List.of("subDir")),
+                Arguments.of(TEST_PATH, true, List.of("existingDir/", "existingFile.x", "existingFile2", "existingFile3", "existingFile4")),
+                Arguments.of(TEST_PATH + "existingDir/", true, List.of("subDir/")),
                 Arguments.of(TEST_PATH + "existingDir/subDir/", true, List.of("existingFile.txt")), Arguments.of(null, false, null),
                 Arguments.of(TEST_PATH + "unexistingDirectory", false, null));
     }
