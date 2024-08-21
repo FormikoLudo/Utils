@@ -9,9 +9,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -71,7 +73,10 @@ public class FLUFiles {
     public static List<String> listFiles(String path) { return internal.listFiles(path); }
     public static List<String> listFilesRecursively(String path) { return internal.listFilesRecursively(path); }
 
-    public static boolean zip(String source, String destination) { return internal.zip(source, destination); }
+    public static boolean zip(String source, String destination) { return zip(source, destination, new ArrayList<>()); }
+    public static boolean zip(String source, String destination, List<String> excluded) {
+        return internal.zip(source, destination, excluded);
+    }
     /**
      * @param directoryInsideZipToGet If it's a/b/ then b/ will be created. To have only b content, use a/b/*
      */
@@ -93,6 +98,8 @@ public class FLUFiles {
     public static boolean setMaxPermission(String path) { return setMaxPermission(path, true); }
 
     public static boolean openWebLinkInBrowser(String url) { return false; }
+
+    public static String toStandardPath(String path) { return path.replace('\\', '/'); }
 
     // Internal class to hide implementation
     private static class FLUFilesInternal {
@@ -291,16 +298,25 @@ public class FLUFiles {
             }
         }
 
-        private boolean zip(String source, String destination) {
+        private boolean zip(String sourceIn, String destination, List<String> excluded) {
+            final String source = toStandardPath(sourceIn);
+            destination = toStandardPath(destination);
+            excluded = excluded.stream().map(FLUFiles::toStandardPath).map(s -> FLUStrings.addAtTheBeginningIfNeeded(s, source)).distinct()
+                    .collect(Collectors.toCollection(ArrayList::new));
+            excluded.add(destination);
+
+            System.out.println(excluded);
+
             if (isAValidePath(source) && isAValidePath(destination)) {
                 destination = FLUStrings.addAtTheEndIfNeeded(destination, ".zip");
                 createParents(destination);
+
                 File sourceFile = new File(source);
                 if (!sourceFile.exists()) {
                     return false;
                 }
                 try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(Paths.get(destination)))) {
-                    zipFile(sourceFile, sourceFile.getName(), destination, zos);
+                    zipFile(sourceFile, sourceFile.getName(), destination, zos, excluded);
                     return true;
                 } catch (IOException e) {
                     return false;
@@ -309,7 +325,13 @@ public class FLUFiles {
                 return false;
             }
         }
-        private void zipFile(File fileToZip, String fileName, String destination, ZipOutputStream zos) throws IOException {
+        private void zipFile(File fileToZip, String fileName, String destination, ZipOutputStream zos, List<String> excluded)
+                throws IOException {
+            for (String exclude : excluded) {
+                if (toStandardPath(fileToZip.getAbsolutePath() + (fileToZip.isDirectory() ? FILE_SEPARATOR : "")).equals(exclude)) {
+                    return;
+                }
+            }
             if (fileToZip.isDirectory()) {
                 final String finalfileName = FLUStrings.addAtTheEndIfNeeded(fileName, FILE_SEPARATOR);
                 zos.putNextEntry(new ZipEntry(finalfileName));
@@ -317,7 +339,7 @@ public class FLUFiles {
                 List<Boolean> allOk = Arrays.asList(true);
                 Arrays.stream(fileToZip.listFiles()).forEach(file -> {
                     try {
-                        zipFile(file, finalfileName + file.getName(), destination, zos);
+                        zipFile(file, finalfileName + file.getName(), destination, zos, excluded);
                     } catch (IOException e) {
                         allOk.set(0, false);
                     }

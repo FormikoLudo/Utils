@@ -270,7 +270,8 @@ public class FLUFilesTest {
 
     private static Stream<Arguments> testListFilesSource() {
         return Stream.of(
-                Arguments.of(TEST_PATH, true, List.of("existingDir/", "existingFile.x", "existingFile2", "existingFile3", "existingFile4")),
+                Arguments.of(TEST_PATH, true,
+                        List.of("existingDir/", "dir1/", "existingFile.x", "existingFile2", "existingFile3", "existingFile4")),
                 Arguments.of(TEST_PATH + "existingDir/", true, List.of("subDir/")),
                 Arguments.of(TEST_PATH + "existingDir/subDir/", true, List.of("existingFile.txt")), Arguments.of(null, false, null),
                 Arguments.of(TEST_PATH + "unexistingDirectory", false, null));
@@ -293,6 +294,34 @@ public class FLUFilesTest {
                         TEST_PATH_TEMPORARY + "existingDirZ2.zip"),
                 Arguments.of(TEST_PATH + "unexistingDirectoryTYUI", false, TEST_PATH_TEMPORARY + "unexistingDirectory.zip", null),
                 Arguments.of("existingDir", false, null, null), Arguments.of(null, false, null, null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testZipWithExclusionSource")
+    void testZipWithExclusion(String path, boolean shouldWork, String destination, String realDestination, List<String> exclusion,
+            List<String> subItems) {
+        assertEquals(shouldWork, FLUFiles.zip(path, destination, exclusion));
+        if (shouldWork) {
+            // unzip
+            assertEquals(shouldWork, FLUFiles.unzip(destination, TEST_PATH_TEMPORARY + "TMP/", ""));
+            // check if the files are here
+            for (String s : subItems) {
+                assertTrue(new File(TEST_PATH_TEMPORARY + "TMP/dir1/" + s).exists());
+                assertTrue(FLUFiles.delete(TEST_PATH_TEMPORARY + "TMP/dir1/" + s));
+
+            }
+            assertTrue(FLUFiles.delete(realDestination));
+        }
+    }
+
+    private static Stream<Arguments> testZipWithExclusionSource() {
+        return Stream.of(
+                Arguments.of(TEST_PATH + "existingDir/", true, TEST_PATH_TEMPORARY + "existingDir.zip",
+                        TEST_PATH_TEMPORARY + "existingDir.zip", List.of(), List.of()),
+                Arguments.of(TEST_PATH + "dir1/", true, TEST_PATH_TEMPORARY + "dir1.zip", TEST_PATH_TEMPORARY + "dir1.zip",
+                        List.of("nonExistingFile.txt"), List.of("dir2/", "dir3/", "file4.md")),
+                Arguments.of(TEST_PATH + "dir1/", true, TEST_PATH_TEMPORARY + "dir1.zip", TEST_PATH_TEMPORARY + "dir1.zip",
+                        List.of("dir2/"), List.of("dir3/", "file4.md")));
     }
 
     @ParameterizedTest
@@ -389,6 +418,11 @@ public class FLUFilesTest {
 
         clean();
         // FLUFiles.zip("../teavm/", "teavm.zip");
-        FLUFiles.unzip("teavm.zip", TEST_PATH_TEMPORARY, "teavm/jso/*");
+        // FLUFiles.unzip("teavm.zip", TEST_PATH_TEMPORARY, "teavm/jso/*");
+        // FLUFiles.zip("C:\\Users\\Hydrolien\\git\\paper.1.21\\", "C:\\Users\\Hydrolien\\git\\paper.1.21\\saves\\1.zip",
+        // List.of("saves/", "cache/"));
+        // FLUFiles.zip("C:/Users/Hydrolien/git/paper.1.21/", "C:/Users/Hydrolien/git/paper.1.21/save/1.zip");
+        FLUFiles.zip("C:/Users/Hydrolien/git/paper.1.21/", "C:/Users/Hydrolien/git/paper.1.21/saves/" + FLUTime.currentTime() + ".zip",
+                List.of("saves/", "cache/"));
     }
 }
