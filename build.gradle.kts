@@ -5,7 +5,7 @@ plugins {
     jacoco
 }
 
-version = "0.0.8"
+version = "0.0.9"
 group = "fr.formiko.utils"
 
 repositories {
