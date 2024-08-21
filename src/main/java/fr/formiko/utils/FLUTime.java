@@ -26,11 +26,14 @@ public class FLUTime {
         long[] tl = msToTimeLongArray(ms, dayOn);
         int k = 0;
         int i = 0;
-        String r = "";
+        StringBuilder r = new StringBuilder();
+        boolean first = true;
         while (k < nbrOfUnit && i < 5) {
             if (tl[i] > 0) {
-                if (!r.equals("")) {
-                    r += " ";
+                if (first) {
+                    first = false;
+                } else {
+                    r.append(" ");
                 }
                 if (i == 3 && k + 1 < nbrOfUnit && tl[i + 1] > 0) { // si on doit traiter les s et les ms ensembles.
                     String s = "" + tl[i + 1];
@@ -40,20 +43,20 @@ public class FLUTime {
                     while (s.length() > 1 && s.charAt(s.length() - 1) == '0') {
                         s = s.substring(0, s.length() - 1);
                     }
-                    r += tl[i] + "," + s + ts[i].substring(2);
+                    r.append(i).append(",").append(s).append(ts[i].substring(2));
                     k++;
                     i++;
                 } else {
-                    r += tl[i] + ts[i].substring(2);
+                    r.append(tl[i]).append(ts[i].substring(2));
                 }
                 k++;
             }
             i++;// pour ne pas sortir du tableau.
         }
-        if (r.equals("")) {
-            r = tl[4] + ts[4].substring(2);
+        if (first) {
+            r.append(tl[4]).append(ts[4].substring(2));
         }
-        return r;
+        return r.toString();
     }
     public static String msToTime(long ms) { return msToTime(ms, 2, true); }
 
