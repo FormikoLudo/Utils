@@ -1,5 +1,8 @@
 package fr.formiko.utils;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 /**
  * {@summary Time functions.}<br>
  * 
@@ -19,8 +22,8 @@ public class FLUTime {
         if (nbrOfUnit < 1) {
             return "";
         }
-        String ts[] = {"t.d", "t.h", "t.min", "t.s", "t.ms"};
-        long tl[] = msToTimeLongArray(ms, dayOn);
+        String[] ts = {"t.d", "t.h", "t.min", "t.s", "t.ms"};
+        long[] tl = msToTimeLongArray(ms, dayOn);
         int k = 0;
         int i = 0;
         String r = "";
@@ -61,7 +64,7 @@ public class FLUTime {
      * @param dayOn enable or disable day as a unit.
      */
     public static long[] msToTimeLongArray(long ms, boolean dayOn) {
-        long tr[] = new long[5];
+        long[] tr = new long[5];
         if (ms < 0) {
             tr[4] = -1;
             return tr;
@@ -101,7 +104,15 @@ public class FLUTime {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException ie) {
-            return;
+            // return;
         }
+    }
+
+    /**
+     * {@summary return the current time as a String 2019-12-31 23-59-59.999}
+     */
+    public static String currentTime() {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss.SSS");
+        return df.format(System.currentTimeMillis());
     }
 }
