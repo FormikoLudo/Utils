@@ -99,7 +99,7 @@ public class FLUFiles {
 
     public static boolean openWebLinkInBrowser(String url) { return false; }
 
-    public static String toStandardPath(String path) { return path.replace('\\', '/'); }
+    public static String toStandardPath(String path) { return path == null ? null : path.replace('\\', '/'); }
 
     // Internal class to hide implementation
     private static class FLUFilesInternal {
